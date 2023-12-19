@@ -1,1 +1,320 @@
-안녕
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from scipy import stats
+
+data_df = pd.read_csv('Data Carrard et al. 2022 MedTeach.csv').drop(columns='id')
+data_describe = pd.read_csv('Codebook Carrard et al. 2022 MedTeach.csv', sep=';')
+
+data_describe
+
+newnames = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+data_df.columns = list(data_df.columns[:14]) + newnames + list(data_df.columns[19:])
+
+data_df.info()
+
+
+select = ['age', 'year', 'stud_h', 'jspe', 'qcae_cog', 'qcae_aff', 'erec_mean'] + newnames
+data_statistics = data_df[select].describe()
+data_statistics
+
+
+plt.figure(figsize=(20, 12))
+
+sns.boxplot(data=data_df[select])
+plt.title("Boxplots for Numeric Columns in the Dataset")
+plt.tight_layout()
+
+plt.show()
+
+
+
+
+
+for i in range(len(data_df)):
+    if data_df['jspe'][i] < 80:
+        data_df['jspe'][i] = None
+    
+    if data_df['qcae_cog'][i] < 30:
+        data_df['qcae_cog'][i] = None
+
+    if data_df['depression'][i] > 50:
+        data_df['depression'][i] = None
+data_df = data_df.dropna(axis = 0)
+
+
+
+data_df
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(18, 15))
+
+temp = ['age', 'year', 'stud_h', 'jspe', 'qcae_cog', 'qcae_aff', 'erec_mean']
+for i in range(len(temp)):
+    sns.histplot(data=data_df[temp[i]], bins=20, ax=axes[i//3, i%3], kde = True)
+    axes[i//3, i%3].set_title(f"{temp[i]} Distribution")
+
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(18, 15))
+
+mental_list = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+for i in range(len(mental_list)):
+    sns.histplot(data=data_df[mental_list[i]], bins=20, ax=axes[i//3, i%3], kde = True)
+    axes[i//3, i%3].set_title(f"{mental_list[i]} Distribution")
+
+
+selected_corr_matrix = data_df[mental_list].corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(selected_corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+plt.title("Correlation Matrix for Selected Columns", fontsize=20)
+plt.show()
+
+
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(18, 15))
+
+categorical_list = ["sex", "glang", "part", "job", "health", 'psyt']
+for i in range(len(categorical_list)):
+    sns.countplot(data=data_df, x=categorical_list[i],ax=axes[i//3, i%3], palette="pastel")
+
+    axes[i//3, i%3].set_title(f"{categorical_list[i]} Distribution")
+
+
+
+
+plt.figure(figsize=(12, 8))
+sns.boxplot(data=data_df, x='year', y='stud_h', palette="coolwarm")
+plt.title("Distribution of Study Hours by Academic Year")
+plt.xlabel("Academic Year")
+plt.ylabel("Study Hours")
+plt.show()
+
+
+
+
+plt.figure(figsize=(12, 8))
+
+for year in range(1,7):
+    subset = data_df[data_df['year'] == year]
+    sns.kdeplot(subset['stud_h'], label=f"Year {year}", fill = True)
+
+plt.title("Study Hours by Academic Year")
+plt.xlabel("Study Hours")
+plt.ylabel("Density")
+plt.legend()
+plt.show()
+
+
+for mental in ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]:
+    plt.figure(figsize=(12, 6))
+    
+    sns.violinplot(data=data_df, x='year', y=mental, palette="coolwarm", inner='quartile')
+
+    plt.title(f"Density of {mental} by Academic Year")
+    plt.xlabel(mental)
+    plt.ylabel("Density")
+    plt.legend()
+    plt.show()
+
+
+
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+
+No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(18, 15))
+
+for year_index in range(6):
+    
+    subset = data_df[data_df['year'] == year_index+1]
+    sns.countplot(data=subset, x='health', palette="coolwarm", ax=axes[year_index//3, year_index%3])
+    axes[year_index//3, year_index%3].set_title(f"health by {year_index+1} Year")
+    
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(20, 12))
+
+mental_health_vars = ['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']
+for i in range(len(mental_health_vars)):
+    sns.kdeplot(data=data_df, x='stud_h', y=mental_health_vars[i],ax=axes[i//3, i%3], fill=True, cmap="Blues", cbar=True)
+
+    axes[i//3, i%3].set_title(f"{mental_health_vars[i]} Distribution")
+
+
+mental = ['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']
+
+fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(20, 15))
+
+for i, variable in enumerate(mental):
+    sns.histplot(data=data_df, x=variable, hue='sex', stat='density', common_norm=False, kde=True, ax=axes[i//2, i%2])
+    axes[i//2, i%2].set_title(f'Distribution of {variable} by Gender')
+    axes[i//2, i%2].legend(title='Gender', labels=['Man', 'Woman', 'Non-binary'])
+
+plt.tight_layout()
+plt.show()
+
+
+
+sns.set_style("whitegrid")
+
+test = ['jspe', 'qcae_cog', 'qcae_aff']
+mental = ['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']
+
+
+fig, axes = plt.subplots(nrows=len(test), ncols=len(mental), figsize=(25, 18))
+
+for i, test_var in enumerate(test):
+    for j, mental_var in enumerate(mental):
+        sns.kdeplot(data=data_df, x=test_var, y=mental_var, ax=axes[i][j], cmap="Blues", fill=True)
+        axes[i][j].set_title(f'{mental_var} by {test_var}')
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+fig, axes = plt.subplots(nrows=len(test), figsize=(10, 15))
+
+for i, test_var in enumerate(test):
+    sns.kdeplot(data=data_df, x=test_var, hue='sex', ax=axes[i], fill=True, common_norm=False)
+    axes[i].set_title(f'Density Distribution of {test_var} by Gender')
+    axes[i].legend(title='Gender', labels=['Man', 'Woman', 'Non-binary'])
+
+plt.tight_layout()
+plt.show()
+
+
+correlation_matrix = data_df[test + mental].corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+plt.title('Correlation between Test and Mental variables')
+plt.show()
+
+
+
+selected_data = data_df.iloc[:, 14:19]
+
+selected_corr_matrix = selected_data.corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(selected_corr_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+plt.title("Correlation Matrix for Selected Columns", fontsize=20)
+plt.show()
+
+
+
+selected_vars = ['health'] + mental_health_vars
+correlation_matrix = data_df[selected_vars].corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, vmin=-1, vmax=1)
+plt.title("Correlation Heatmap between Health and Mental Health Variables")
+plt.show()
+
+
+fig, axs = plt.subplots(len(mental_health_vars), 1, figsize=(5, 20))
+
+for ax, var_col in zip(axs, mental_health_vars):
+    sns.violinplot(data=data_df, x='health', y=var_col, ax=ax, inner='quartile')
+    ax.set_title(f'Health vs {var_col.capitalize()}')
+    ax.set_ylabel(var_col.capitalize())
+    ax.set_xlabel('Health')
+
+plt.tight_layout()
+plt.show()
+
+
+# Filter the data based on psyt values
+data_psyt_0 = data_df[data_df['psyt'] == 0][['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']]
+data_psyt_1 = data_df[data_df['psyt'] == 1][['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']]
+# Calculate descriptive statistics for both groups
+stats_psyt_0 = data_psyt_0.describe()
+stats_psyt_1 = data_psyt_1.describe()
+
+stats_psyt_0, stats_psyt_1
+
+
+
+
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(25,10))
+
+mental_list = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+for i in range(len(mental_list)):
+
+    sns.histplot(data=data_psyt_0[mental_list[i]], bins=20, ax=axes[0, i], kde = True, color='blue')
+    axes[0, i].set_title(f'{mental_health_vars[i]} (psyt = 0)')
+
+    sns.histplot(data=data_psyt_1[mental_list[i]], bins=20, ax=axes[1, i], kde = True, color='green')
+    axes[1, i].set_title(f'{mental_health_vars[i]} (psyt = 1)')
+
+
+
+
+data_part_0 = data_df[data_df['part'] == 0][['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']]
+data_part_1 = data_df[data_df['part'] == 1][['depression', 'anxiety', 'exhaustion', 'cynicism', 'efficacy']]
+# Calculate descriptive statistics for both groups
+stats_part_0 = data_part_0.describe()
+stats_part_1 = data_part_1.describe()
+
+stats_part_0, stats_part_1
+
+
+
+sns.set_style("whitegrid")
+
+fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(25,10))
+
+mental_list = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+for i in range(len(mental_list)):
+
+    sns.histplot(data=data_part_0[mental_list[i]], bins=20, ax=axes[0, i], kde = True, color='blue')
+    axes[0, i].set_title(f'{mental_health_vars[i]} (part = 0)')
+
+    sns.histplot(data=data_part_1[mental_list[i]], bins=20, ax=axes[1, i], kde = True, color='green')
+    axes[1, i].set_title(f'{mental_health_vars[i]} (part = 1)')
+
+
+
+
+select_cols = ['age', 'stud_h', 'jspe', 'qcae_cog', 'qcae_aff', 'erec_mean'] + mental_list
+
+fig, axes = plt.subplots(nrows=4, ncols=3, figsize=(20, 18))
+
+for ax, col in zip(axes.ravel(), select_cols):
+    stats.probplot(data_df[col], plot=ax)
+    ax.set_title(f'QQ-plot for {col}')
+
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
+
