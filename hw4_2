@@ -1,0 +1,146 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from scipy import stats
+
+data_df = pd.read_csv('Data Carrard et al. 2022 MedTeach.csv').drop(columns='id')
+data_describe = pd.read_csv('Codebook Carrard et al. 2022 MedTeach.csv', sep=';')
+newnames = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+data_df.columns = list(data_df.columns[:14]) + newnames + list(data_df.columns[19:])
+
+for i in range(len(data_df)):
+    if data_df['jspe'][i] < 80:
+        data_df['jspe'][i] = None
+    
+    if data_df['qcae_cog'][i] < 30:
+        data_df['qcae_cog'][i] = None
+
+    if data_df['depression'][i] > 50:
+        data_df['depression'][i] = None
+
+data_df = data_df.dropna(axis = 0)
+
+
+mental_measures = ["depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+gender_column = "sex"
+mental_data = data_df[mental_measures + [gender_column]]
+
+
+
+
+man = mental_data[mental_data[gender_column] == 1]
+woman = mental_data[mental_data[gender_column] == 2]
+
+man.describe()
+
+woman.describe()
+
+
+
+
+from scipy.stats import ttest_ind
+
+mental_results = {}
+
+for measure in mental_measures:
+    
+    group1 = mental_data[mental_data[gender_column] == 1][measure] #man
+    group2 = mental_data[mental_data[gender_column] == 2][measure] #woman
+
+    t_stat, p_value = ttest_ind(group1, group2, nan_policy='omit')
+
+    mental_results[measure] = {'t-statistic': t_stat, 'p-value': p_value}
+
+mental_results_df = pd.DataFrame(mental_results).transpose()
+mental_results_df.columns = ['T-Statistic', 'P-Value']
+
+mental_results_df
+
+test_measures = ['jspe', 'qcae_cog', 'qcae_aff', 'amsp']
+gender_column = "sex"
+test_data = data_df[test_measures + [gender_column]]
+man = test_data[test_data[gender_column] == 1].describe()
+woman = test_data[test_data[gender_column] == 2].describe()
+
+
+
+
+test_results = {}
+
+for measure in test_measures:
+  
+    group1 = test_data[test_data[gender_column] == 1][measure] #man
+    group2 = test_data[test_data[gender_column] == 2][measure] #woman
+
+    t_stat, p_value = ttest_ind(group1, group2, nan_policy='omit')
+
+    test_results[measure] = {'t-statistic': t_stat, 'p-value': p_value}
+
+
+
+test_results_df = pd.DataFrame(test_results).transpose()
+test_results_df.columns = ['T-Statistic', 'P-Value']
+
+test_results_df
+
+
+
+test_measures = ['jspe', 'qcae_cog', 'qcae_aff', 'amsp']
+depression_column = "depression"
+
+test_data = data_df[test_measures + [depression_column]]
+
+
+
+
+test_results = {}
+
+for measure in test_measures:
+
+    group1 = test_data[test_data[depression_column] >= 16][measure]
+    group2 = test_data[test_data[depression_column] < 16][measure] 
+
+    t_stat, p_value = ttest_ind(group1, group2, nan_policy='omit')
+
+    test_results[measure] = {'t-statistic': t_stat, 'p-value': p_value}
+
+
+test_results_by_depression_df = pd.DataFrame(test_results).transpose()
+
+test_results_by_depression_df.columns = ['T-Statistic', 'P-Value']
+test_results_by_depression_df
+
+
+
+lower_classes = [1, 2, 3]
+upper_classes = [4, 5, 6]
+
+lower_class_data = data_df[data_df['year'].isin(lower_classes)]
+upper_class_data = data_df[data_df['year'].isin(upper_classes)]
+
+measures = ['jspe', 'qcae_cog', 'qcae_aff', 'amsp', "depression", "anxiety", "exhaustion", "cynicism", "efficacy"]
+
+test_results = {}
+
+for measure in measures:
+    lower_class_scores = lower_class_data[measure]
+    upper_class_scores = upper_class_data[measure]
+    
+    t_stat, p_value = ttest_ind(lower_class_scores, upper_class_scores)
+
+    test_results[measure] = {'t-statistic': t_stat, 'p-value': p_value}
+
+pd.DataFrame(test_results).T
+
+
+
+
+
+
+
+
+
+
+
+
